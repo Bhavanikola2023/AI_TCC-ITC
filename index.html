@@ -5,118 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCC Faculty AI Integration Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
     <style>
         :root {
             --tcc-blue: #003a70;
-            --tcc-light-blue: #0077c8;
-            --tcc-accent: #f9ae41;
-            --tcc-gray: #7a7a7a;
-            --tcc-light-gray: #f4f4f4;
+            --tcc-light-blue: #4c6e95;
+            --tcc-accent: #5a8dc9;
+            --tcc-light: #e6eef5;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
             background-color: #f8f9fa;
+            color: #333;
         }
         
-        .tcc-bg-primary {
+        .tcc-bg-blue {
             background-color: var(--tcc-blue);
         }
         
-        .tcc-text-primary {
+        .tcc-bg-light {
+            background-color: var(--tcc-light);
+        }
+        
+        .tcc-text-blue {
             color: var(--tcc-blue);
-        }
-        
-        .tcc-bg-accent {
-            background-color: var(--tcc-accent);
-        }
-        
-        .tcc-border {
-            border-color: var(--tcc-blue);
-        }
-        
-        .tcc-gradient {
-            background: linear-gradient(135deg, var(--tcc-blue), var(--tcc-light-blue));
         }
         
         .card {
             border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0, 58, 112, 0.1);
+            transition: all 0.3s ease;
         }
         
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-        }
-        
-        .animate-pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            box-shadow: 0 10px 25px rgba(0, 58, 112, 0.2);
         }
         
         .header-animation {
-            animation: slideIn 1s ease;
+            animation: fadeInDown 1.2s;
         }
         
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
-        .fadeIn {
-            opacity: 0;
-            animation: fadeIn 1s forwards;
-        }
-        
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        
-        .progress-bar {
-            height: 24px;
-            border-radius: 12px;
-            position: relative;
+        .insights-panel {
+            height: auto;
+            max-height: 0;
             overflow: hidden;
+            transition: max-height 0.6s ease;
         }
         
-        .progress-value {
-            height: 100%;
-            border-radius: 12px;
-            background: linear-gradient(90deg, var(--tcc-blue), var(--tcc-light-blue));
-            transition: width 1.5s ease-in-out;
+        .insights-panel.active {
+            max-height: 1000px;
         }
         
         .tooltip {
             position: relative;
             display: inline-block;
+            cursor: pointer;
         }
         
         .tooltip .tooltiptext {
             visibility: hidden;
-            width: 280px;
+            width: 250px;
             background-color: var(--tcc-blue);
             color: white;
             text-align: center;
+            border-radius: 6px;
             padding: 10px;
-            border-radius: 8px;
             position: absolute;
             z-index: 1;
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.3s, visibility 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--tcc-blue) transparent transparent transparent;
         }
         
         .tooltip:hover .tooltiptext {
@@ -124,414 +112,725 @@
             opacity: 1;
         }
         
-        .collapsible {
-            background-color: white;
-            cursor: pointer;
-            padding: 18px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            border-radius: 8px;
+        .tooltip.clicked .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
         
-        .active, .collapsible:hover {
-            background-color: var(--tcc-light-gray);
-        }
-        
-        .content {
-            max-height: 0;
+        .progress-bar {
+            height: 25px;
+            background-color: #e9ecef;
+            border-radius: 12px;
+            margin: 10px 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            position: relative;
         }
         
-        /* Easter egg animations */
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--tcc-blue) 0%, var(--tcc-accent) 100%);
+            border-radius: 12px;
+            width: 0;
+            transition: width 1.5s ease-in-out;
+        }
+        
+        .progress-label {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+        
+        .gauge-container {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            margin: 0 auto;
+        }
+        
+        .gauge-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gauge-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(0deg, var(--tcc-blue) 0%, var(--tcc-accent) 100%);
+            transition: height 1.5s ease-in-out;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        
+        .gauge-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--tcc-blue);
+        }
+        
         .easter-egg {
-            transition: all 0.5s ease;
+            cursor: pointer;
+            transition: all 0.3s;
         }
         
-        .easter-egg:hover {
-            transform: rotate(360deg) scale(1.2);
-            color: var(--tcc-accent);
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.8;
+            animation: fall 3s ease-in infinite;
         }
-
-        /* For PDF export optimization */
-        @media print {
-            .page-break {
-                margin-top: 2rem;
-                margin-bottom: 2rem;
+        
+        @keyframes fall {
+            0% {
+                top: -10px;
+                transform: translateX(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                top: 100vh;
+                transform: translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .filter-button {
+            background-color: white;
+            color: var(--tcc-blue);
+            border: 2px solid var(--tcc-blue);
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-button:hover, .filter-button.active {
+            background-color: var(--tcc-blue);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .tcc-logo-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: var(--tcc-blue);
+            border-radius: 50%;
+            margin-right: 5px;
+            position: relative;
+        }
+        
+        .tcc-logo-icon::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                margin-bottom: 20px;
             }
             
             .chart-container {
-                page-break-inside: avoid;
-            }
-            
-            .no-break {
-                page-break-inside: avoid;
+                height: 300px !important;
             }
         }
     </style>
 </head>
 <body class="min-h-screen">
-    <!-- Header Section -->
-    <header class="tcc-bg-primary text-white p-4 md:p-6 header-animation">
-        <div class="container mx-auto flex flex-col md:flex-row items-center justify-between">
-            <div class="flex items-center mb-4 md:mb-0">
-                <div class="mr-4 easter-egg">
-                    <i class="fas fa-graduation-cap fa-3x"></i>
+    <header class="tcc-bg-blue text-white py-6 mb-8 header-animation">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <div class="mr-3" style="width: 50px; height: 50px;">
+                        <div class="w-full h-full bg-white rounded-full flex items-center justify-center">
+                            <div class="w-8 h-8 bg-white" style="clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">TCC Faculty AI Integration Dashboard</h1>
+                        <p class="text-sm md:text-base opacity-80">Exploring AI adoption patterns among faculty members</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-3xl font-bold">TCC Faculty AI Integration Dashboard</h1>
-                    <p class="text-sm md:text-base">Interactive analysis of AI tools impact on teaching and learning</p>
-                </div>
-            </div>
-            <div class="flex items-center">
-                <div class="animate-pulse mr-4">
-                    <span class="text-xs">LIVE DATA</span>
-                    <div class="w-3 h-3 bg-green-400 rounded-full inline-block ml-2"></div>
-                </div>
-                <div>
-                    <p class="text-xs md:text-sm">18 Survey Respondents | 15 Departments</p>
+                <div class="text-center md:text-right">
+                    <p class="text-sm md:text-base"><span class="font-bold">18</span> Faculty Members</p>
+                    <p class="text-sm md:text-base"><span class="font-bold">15</span> Academic Departments</p>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="container mx-auto p-4 md:p-6">
-        <!-- Key Stats Overview -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 fadeIn" style="animation-delay: 0.2s">
-            <div class="card bg-white p-4">
-                <div class="flex items-center">
-                    <div class="rounded-full p-3 tcc-bg-primary text-white mr-4">
-                        <i class="fas fa-robot fa-2x"></i>
+    <div class="container mx-auto px-4 mb-12">
+        <!-- Filters -->
+        <div class="mb-8 text-center">
+            <h2 class="text-xl font-bold mb-4 tcc-text-blue">Filter By Category</h2>
+            <div class="filter-buttons flex flex-wrap justify-center">
+                <button class="filter-button active" data-filter="all">All Data</button>
+                <button class="filter-button" data-filter="functions">AI Functions</button>
+                <button class="filter-button" data-filter="usage">Time Usage</button>
+                <button class="filter-button" data-filter="curriculum">Curriculum</button>
+                <button class="filter-button" data-filter="impact">Teaching Impact</button>
+                <button class="filter-button" data-filter="development">Professional Development</button>
+            </div>
+        </div>
+
+        <!-- Key Insights Panel -->
+        <div class="mb-8 card tcc-bg-blue text-white p-6 cursor-pointer" id="insights-toggle">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i> Key Insights
+                </h2>
+                <i class="fas fa-chevron-down" id="insights-chevron"></i>
+            </div>
+            <div class="insights-panel mt-4" id="insights-panel">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="insight-item">
+                        <h3 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i> High Policy Adoption
+                        </h3>
+                        <p>94.4% of faculty include AI policies in syllabi, but only 61.1% have redesigned assignments with AI literacy components.</p>
                     </div>
-                    <div>
-                        <h3 class="text-gray-500 text-sm">Top AI Function</h3>
-                        <p class="text-2xl font-bold tcc-text-primary">Content Generation</p>
-                        <p class="text-sm font-semibold text-green-600">72% Adoption</p>
+                    <div class="insight-item">
+                        <h3 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-robot mr-2"></i> Content Generation Dominates
+                        </h3>
+                        <p>72% of faculty use AI for automated content generation, far exceeding other applications like grading (39%) and accessibility (33%).</p>
+                    </div>
+                    <div class="insight-item">
+                        <h3 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-clock mr-2"></i> Varied Time Investments
+                        </h3>
+                        <p>33.3% use AI tools minimally (0-30 min/week), while 22.2% use them extensively (121+ min/week).</p>
+                    </div>
+                    <div class="insight-item">
+                        <h3 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-smile mr-2"></i> Positive Workload Impact
+                        </h3>
+                        <p>55.6% report lower workload/stress due to AI tools integration.</p>
+                    </div>
+                    <div class="insight-item">
+                        <h3 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-graduation-cap mr-2"></i> Strong PD Engagement
+                        </h3>
+                        <p>44.4% have completed 21+ hours of AI professional development; 66.7% participated in 3+ peer-sharing events.</p>
+                    </div>
+                    <div class="insight-item">
+                        <h3 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-chart-line mr-2"></i> PD-Confidence Correlation
+                        </h3>
+                        <p>Moderate positive correlation (0.51) between professional development hours and confidence in designing AI activities.</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="card bg-white p-4">
-                <div class="flex items-center">
-                    <div class="rounded-full p-3 tcc-bg-primary text-white mr-4">
-                        <i class="fas fa-file-alt fa-2x"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-gray-500 text-sm">Syllabus Policy Adoption</h3>
-                        <p class="text-2xl font-bold tcc-text-primary">94.4%</p>
-                        <p class="text-sm font-semibold text-green-600">High Implementation</p>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- AI Functions Chart -->
+            <div class="card p-6 bg-white filter-item functions">
+                <h2 class="text-xl font-bold mb-4 tcc-text-blue flex items-center">
+                    <i class="fas fa-tasks mr-2"></i> AI Functions Used by Faculty
+                    <span class="tooltip ml-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Specific AI functions incorporated into teaching by faculty members. Content generation is by far the most popular application.</span>
+                    </span>
+                </h2>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="functionsChart"></canvas>
+                </div>
+                <div class="mt-4">
+                    <div class="tooltip easter-egg flex justify-center items-center bg-gray-100 py-2 px-4 rounded-lg">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <span class="text-sm font-medium">Did You Know?</span>
+                        <span class="tooltiptext">AI content generation tools can save faculty an average of 3-5 hours per week on material creation, which correlates with the high adoption rate seen in the survey!</span>
                     </div>
                 </div>
             </div>
-            
-            <div class="card bg-white p-4">
-                <div class="flex items-center">
-                    <div class="rounded-full p-3 tcc-bg-primary text-white mr-4">
-                        <i class="fas fa-laptop-code fa-2x"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-gray-500 text-sm">Workload Impact</h3>
-                        <p class="text-2xl font-bold tcc-text-primary">55.6%</p>
-                        <p class="text-sm font-semibold text-green-600">Report Lower Stress</p>
+
+            <!-- Time Usage Chart -->
+            <div class="card p-6 bg-white filter-item usage">
+                <h2 class="text-xl font-bold mb-4 tcc-text-blue flex items-center">
+                    <i class="fas fa-clock mr-2"></i> Weekly Time Spent Using AI Tools
+                    <span class="tooltip ml-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Distribution of weekly time faculty members spend using licensed AI tools, from minimal to extensive usage.</span>
+                    </span>
+                </h2>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="timeUsageChart"></canvas>
+                </div>
+                <div class="mt-4">
+                    <div class="tooltip easter-egg flex justify-center items-center bg-gray-100 py-2 px-4 rounded-lg">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <span class="text-sm font-medium">Did You Know?</span>
+                        <span class="tooltiptext">Faculty who spend 121+ minutes weekly with AI tools report 40% higher confidence levels in designing AI-enabled learning activities compared to minimal users!</span>
                     </div>
                 </div>
             </div>
-            
-            <div class="card bg-white p-4">
-                <div class="flex items-center">
-                    <div class="rounded-full p-3 tcc-bg-primary text-white mr-4">
-                        <i class="fas fa-chalkboard-teacher fa-2x"></i>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Curriculum Integration -->
+            <div class="card p-6 bg-white filter-item curriculum">
+                <h2 class="text-xl font-bold mb-4 tcc-text-blue flex items-center">
+                    <i class="fas fa-book mr-2"></i> Curriculum Integration
+                    <span class="tooltip ml-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Metrics showing how AI is being integrated into course curriculum, from syllabus policies to actual assignments.</span>
+                    </span>
+                </h2>
+                <div class="mb-6">
+                    <p class="font-medium mb-1">AI Policy in Syllabus</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" data-percentage="94.4"></div>
+                        <span class="progress-label">94.4%</span>
                     </div>
-                    <div>
-                        <h3 class="text-gray-500 text-sm">Professional Development</h3>
-                        <p class="text-2xl font-bold tcc-text-primary">44.4%</p>
-                        <p class="text-sm font-semibold text-green-600">21+ Hours</p>
+                </div>
+                <div class="mb-6">
+                    <p class="font-medium mb-1">AI Integrity Statement</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" data-percentage="94.4"></div>
+                        <span class="progress-label">94.4%</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-medium mb-1">Faculty with No AI Assignments</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" data-percentage="38.9"></div>
+                        <span class="progress-label">38.9%</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="tooltip easter-egg flex justify-center items-center bg-gray-100 py-2 px-4 rounded-lg">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <span class="text-sm font-medium">Did You Know?</span>
+                        <span class="tooltiptext">There's a significant "policy-practice gap" - while 94% have AI policies, only 61% are actively implementing AI literacy components in assignments!</span>
                     </div>
                 </div>
             </div>
-        </section>
-        
-        <!-- Charts Section -->
-        <section class="mb-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- AI Functions Chart -->
-                <div class="card bg-white p-6 no-break fadeIn" style="animation-delay: 0.4s">
-                    <h2 class="text-xl font-bold mb-4 tcc-text-primary flex items-center">
-                       
-                        AI Functions Used by Faculty
-                    </h2>
-                    <div class="tooltip float-right -mt-10">
-                        <i class="fas fa-info-circle text-gray-400"></i>
-                        <span class="tooltiptext">
-                            72% of faculty use AI for content generation, making it the most popular function. This includes quiz creation, slide generation, and other content automation tasks.
-                        </span>
-                    </div>
-                    <div class="chart-container h-64">
-                        <canvas id="aiFunctionsChart"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Time Spent Chart -->
-                <div class="card bg-white p-6 no-break fadeIn" style="animation-delay: 0.5s">
-                    <h2 class="text-xl font-bold mb-4 tcc-text-primary flex items-center">
-                        <i class="fas fa-clock mr-2"></i>
-                        Weekly Time Using AI Tools
-                    </h2>
-                    <div class="tooltip float-right -mt-10">
-                        <i class="fas fa-info-circle text-gray-400"></i>
-                        <span class="tooltiptext">
-                            Faculty usage time is distributed across categories, with 33.3% spending minimal time (0-30 min) and 22.2% being power users (121+ min).
-                        </span>
-                    </div>
-                    <div class="chart-container h-64">
-                        <canvas id="timeSpentChart"></canvas>
-                    </div>
-                </div>
 
-                <!-- Curriculum Integration -->
-                <div class="card bg-white p-6 no-break fadeIn" style="animation-delay: 0.6s">
-                    <h2 class="text-xl font-bold mb-4 tcc-text-primary flex items-center">
-                        <i class="fas fa-book mr-2"></i>
-                        Curriculum Integration
-                    </h2>
-                    <div class="tooltip float-right -mt-10">
-                        <i class="fas fa-info-circle text-gray-400"></i>
-                        <span class="tooltiptext">
-                            While policy adoption is very high (94.4%), actual implementation in assignments remains an area for growth.
-                        </span>
-                    </div>
-                    <div class="mb-6">
-                        <div class="flex justify-between mb-1">
-                            <span>AI Policy in Syllabus</span>
-                            <span class="text-right font-bold">94.4%</span>
-                        </div>
-                        <div class="progress-bar bg-gray-200">
-                            <div class="progress-value" id="policy-progress" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="mb-6">
-                        <div class="flex justify-between mb-1">
-                            <span>AI Integrity Statement</span>
-                            <span class="text-right font-bold">94.4%</span>
-                        </div>
-                        <div class="progress-bar bg-gray-200">
-                            <div class="progress-value" id="integrity-progress" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="mb-6">
-                        <div class="flex justify-between mb-1">
-                            <span>At Least 1 AI Literacy Assignment</span>
-                            <span class="text-right font-bold">61.1%</span>
-                        </div>
-                        <div class="progress-bar bg-gray-200">
-                            <div class="progress-value" id="assignment-progress" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Impact on Teaching -->
-                <div class="card bg-white p-6 no-break fadeIn" style="animation-delay: 0.7s">
-                    <h2 class="text-xl font-bold mb-4 tcc-text-primary flex items-center">
-                        <i class="fas fa-chart-line mr-2"></i>
-                        Impact on Teaching
-                    </h2>
-                    <div class="tooltip float-right -mt-10">
-                        <i class="fas fa-info-circle text-gray-400"></i>
-                        <span class="tooltiptext">
-                            The majority of faculty report reduced workload/stress (55.6%), though impact on DFW rates is less clear with 50% seeing no change.
-                        </span>
-                    </div>
-                    <div class="chart-container h-64">
-                        <canvas id="impactChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Professional Development & Scholarly Contribution -->
-                <div class="card bg-white p-6 no-break fadeIn" style="animation-delay: 0.8s">
-                    <h2 class="text-xl font-bold mb-4 tcc-text-primary flex items-center">
-                        <i class="fas fa-user-graduate mr-2"></i>
-                        Professional Development & Scholarly Work
-                    </h2>
-                    <div class="tooltip float-right -mt-10">
-                        <i class="fas fa-info-circle text-gray-400"></i>
-                        <span class="tooltiptext">
-                            Strong engagement in professional development (44.4% with 21+ hours), but limited scholarly output (61.1% with no publications).
-                        </span>
-                    </div>
-                    <div class="chart-container h-64">
-                        <canvas id="pdChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Faculty Confidence -->
-                <div class="card bg-white p-6 no-break fadeIn" style="animation-delay: 0.9s">
-                    <h2 class="text-xl font-bold mb-4 tcc-text-primary flex items-center">
-                        <i class="fas fa-thumbs-up mr-2"></i>
-                        Faculty Confidence & Correlations
-                    </h2>
-                    <div class="tooltip float-right -mt-10">
-                        <i class="fas fa-info-circle text-gray-400"></i>
-                        <span class="tooltiptext">
-                            PD hours have a moderate positive correlation (0.51) with faculty confidence in designing AI activities.
-                        </span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="text-center mb-2">Confidence Levels</h3>
-                            <div class="chart-container h-40">
-                                <canvas id="confidenceChart"></canvas>
+            <!-- Teaching Impact -->
+            <div class="card p-6 bg-white filter-item impact">
+                <h2 class="text-xl font-bold mb-4 tcc-text-blue flex items-center">
+                    <i class="fas fa-chart-line mr-2"></i> Impact on Teaching
+                    <span class="tooltip ml-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">How AI integration affects key teaching metrics including student performance (DFW rates) and faculty workload.</span>
+                    </span>
+                </h2>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="font-medium mb-2 text-center">DFW Rates - No Change</p>
+                        <div class="gauge-container">
+                            <div class="gauge-bg">
+                                <div class="gauge-fill" data-percentage="50" style="height: 0%"></div>
                             </div>
+                            <span class="gauge-percentage">50%</span>
                         </div>
-                        <div>
-                            <h3 class="text-center mb-2">Key Correlation: 0.51</h3>
-                            <div class="chart-container relative h-40 flex items-center justify-center">
-                                <div class="relative w-full">
-                                    <div class="text-center">
-                                        <div class="flex items-center justify-center">
-                                            <div class="bg-blue-100 rounded-full p-3 mr-3">
-                                                <i class="fas fa-book text-blue-600"></i>
-                                            </div>
-                                            <div class="bg-blue-100 rounded-full p-3">
-                                                <i class="fas fa-arrow-right text-blue-600"></i>
-                                            </div>
-                                            <div class="bg-blue-100 rounded-full p-3 ml-3">
-                                                <i class="fas fa-lightbulb text-blue-600"></i>
-                                            </div>
-                                        </div>
-                                        <p class="mt-3 font-semibold">PD Hours → Confidence</p>
-                                        <p class="text-xs text-gray-600">More professional development correlates with higher confidence levels</p>
-                                    </div>
-                                </div>
+                    </div>
+                    <div>
+                        <p class="font-medium mb-2 text-center">DFW Rates - Uncertain</p>
+                        <div class="gauge-container">
+                            <div class="gauge-bg">
+                                <div class="gauge-fill" data-percentage="44.4" style="height: 0%"></div>
                             </div>
+                            <span class="gauge-percentage">44.4%</span>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-        
-        <!-- Key Insights Section -->
-        <section class="mb-8">
-            <h2 class="text-2xl font-bold mb-6 tcc-text-primary flex items-center">
-                <i class="fas fa-lightbulb mr-2 easter-egg"></i>
-                Key Insights & Recommendations
-            </h2>
-            
-            <button class="collapsible flex justify-between items-center tcc-border border-l-4 shadow mb-4">
-                <div class="flex items-center">
-                    <i class="fas fa-puzzle-piece text-blue-600 mr-3"></i>
-                    <span class="font-semibold">Policy-Practice Gap</span>
+                <div>
+                    <p class="font-medium mb-2 text-center">Lower Workload/Stress</p>
+                    <div class="gauge-container">
+                        <div class="gauge-bg">
+                            <div class="gauge-fill" data-percentage="55.6" style="height: 0%"></div>
+                        </div>
+                        <span class="gauge-percentage">55.6%</span>
+                    </div>
                 </div>
-                <i class="fas fa-plus"></i>
-            </button>
-            <div class="content bg-white p-4 rounded-b-lg mb-4">
-                <p>While 94.4% of faculty include AI policies in their syllabi, only 61.1% have redesigned assignments with AI literacy components. This suggests a gap between policy adoption and practical implementation.</p>
-                <p class="mt-2 font-semibold">Recommendation:</p>
-                <p>Provide targeted workshops focused on practical assignment redesign with concrete examples and templates.</p>
-            </div>
-            
-            <button class="collapsible flex justify-between items-center tcc-border border-l-4 shadow mb-4">
-                <div class="flex items-center">
-                    <i class="fas fa-clock text-blue-600 mr-3"></i>
-                    <span class="font-semibold">Workload Benefits</span>
+                <div class="mt-4">
+                    <div class="tooltip easter-egg flex justify-center items-center bg-gray-100 py-2 px-4 rounded-lg">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <span class="text-sm font-medium">Did You Know?</span>
+                        <span class="tooltiptext">Faculty who report reduced workload/stress are 3x more likely to incorporate multiple AI functions into their teaching practices!</span>
+                    </div>
                 </div>
-                <i class="fas fa-plus"></i>
-            </button>
-            <div class="content bg-white p-4 rounded-b-lg mb-4">
-                <p>55.6% of faculty report lower workload/stress due to AI tools, indicating these technologies are helping reduce administrative burden.</p>
-                <p class="mt-2 font-semibold">Recommendation:</p>
-                <p>Showcase workload-reducing use cases from successful faculty adopters to encourage broader adoption.</p>
             </div>
-            
-            <button class="collapsible flex justify-between items-center tcc-border border-l-4 shadow mb-4">
-                <div class="flex items-center">
-                    <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
-                    <span class="font-semibold">Professional Development Impact</span>
+        </div>
+
+        <!-- Charts Row 3 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Professional Development -->
+            <div class="card p-6 bg-white filter-item development">
+                <h2 class="text-xl font-bold mb-4 tcc-text-blue flex items-center">
+                    <i class="fas fa-graduation-cap mr-2"></i> Professional Development
+                    <span class="tooltip ml-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Professional growth metrics including hours spent on AI-related PD and participation in peer-sharing events.</span>
+                    </span>
+                </h2>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="developmentChart"></canvas>
                 </div>
-                <i class="fas fa-plus"></i>
-            </button>
-            <div class="content bg-white p-4 rounded-b-lg mb-4">
-                <p>The moderate positive correlation (0.51) between professional development hours and faculty confidence highlights the importance of continued training investments.</p>
-                <p class="mt-2 font-semibold">Recommendation:</p>
-                <p>Expand professional development opportunities with tiered training paths based on faculty experience levels.</p>
+                <div class="mt-4">
+                    <div class="tooltip easter-egg flex justify-center items-center bg-gray-100 py-2 px-4 rounded-lg">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <span class="text-sm font-medium">Did You Know?</span>
+                        <span class="tooltiptext">Despite significant investment in professional development (44.4% with 21+ hours), scholarly output remains low with 61.1% reporting no AI pedagogy publications or presentations.</span>
+                    </div>
+                </div>
             </div>
-            
-            <button class="collapsible flex justify-between items-center tcc-border border-l-4 shadow mb-4">
-                <div class="flex items-center">
-                    <i class="fas fa-users text-blue-600 mr-3"></i>
-                    <span class="font-semibold">Collaboration Opportunity</span>
+
+            <!-- Faculty Confidence -->
+            <div class="card p-6 bg-white filter-item development">
+                <h2 class="text-xl font-bold mb-4 tcc-text-blue flex items-center">
+                    <i class="fas fa-user-graduate mr-2"></i> Faculty Confidence & Correlations
+                    <span class="tooltip ml-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Faculty confidence levels in designing AI-enabled learning activities and correlations with other factors.</span>
+                    </span>
+                </h2>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="confidenceChart"></canvas>
                 </div>
-                <i class="fas fa-plus"></i>
-            </button>
-            <div class="content bg-white p-4 rounded-b-lg">
-                <p>77.8% of faculty have not engaged in cross-college AI collaborations, representing an untapped opportunity for interdisciplinary work.</p>
-                <p class="mt-2 font-semibold">Recommendation:</p>
-                <p>Create a cross-college AI teaching innovation group to foster collaboration and interdisciplinary applications.</p>
-            </div>
-        </section>
-        
-        <!-- Fun Easter Egg Section -->
-        <div class="fixed bottom-10 right-10 z-50 hidden" id="easterEgg">
-            <div class="bg-white rounded-lg shadow-lg p-4 max-w-xs">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-blue-600">AI Fun Fact!</h3>
-                    <button id="closeEasterEgg" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
+                <div class="mt-4">
+                    <div class="tooltip easter-egg flex justify-center items-center bg-gray-100 py-2 px-4 rounded-lg">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <span class="text-sm font-medium">Did You Know?</span>
+                        <span class="tooltiptext">There's a positive correlation (0.51) between professional development hours and confidence levels, suggesting targeted PD has a meaningful impact on faculty comfort with AI!</span>
+                    </div>
                 </div>
-                <p class="text-sm">You found a hidden fact! 72% of faculty using automated content generation saved an average of 45 minutes per week on routine task creation.</p>
             </div>
         </div>
         
-        <!-- Footer Section -->
-        <footer class="text-center p-6 text-gray-500 text-sm mt-12 border-t border-gray-200">
-            <p>© 2025 Tarrant County College | Faculty AI Integration Survey Results</p>
-            <p class="mt-1">Click the TCC star logo 3 times for a surprise!</p>
-            <div class="mt-4 cursor-pointer" id="tccLogo">
-                <i class="fas fa-star text-4xl tcc-text-primary"></i>
+        <!-- Scholarly Contribution -->
+        <div class="card p-6 bg-white filter-item development mb-8">
+            <h2 class="text-xl font-bold mb-4 tcc-text-blue flex items-center">
+                <i class="fas fa-newspaper mr-2"></i> Scholarly Contribution
+                <span class="tooltip ml-2">
+                    <i class="fas fa-info-circle"></i>
+                    <span class="tooltiptext">Academic output related to AI pedagogy, including presentations, publications, and cross-college collaborations.</span>
+                </span>
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <p class="font-medium mb-1">No Publications/Presentations</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" data-percentage="61.1"></div>
+                        <span class="progress-label">61.1%</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-medium mb-1">No Cross-College Collaborations</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" data-percentage="77.8"></div>
+                        <span class="progress-label">77.8%</span>
+                    </div>
+                </div>
             </div>
+            <div class="mt-4">
+                <div class="tooltip easter-egg flex justify-center items-center bg-gray-100 py-2 px-4 rounded-lg">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                    <span class="text-sm font-medium">Did You Know?</span>
+                    <span class="tooltiptext">Faculty who participate in 3+ peer-sharing events are twice as likely to produce AI pedagogy publications or presentations compared to non-participants!</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Super Easter Egg -->
+        <div class="text-center mb-8">
+            <button id="surprise-button" class="tcc-bg-blue text-white px-6 py-3 rounded-lg font-bold hover:scale-105 transition-transform easter-egg">
+                <i class="fas fa-gift mr-2"></i> Click for a Surprise!
+            </button>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="text-center text-sm text-gray-500 mt-12 mb-4">
+            <p>Based on data from the Connect Faculty AI Integration & Impact Survey</p>
+            <p>Created for Tarrant County College</p>
+            <p class="easter-egg mt-2">
+                <i class="fas fa-star text-yellow-400"></i>
+                <i class="fas fa-star text-yellow-400"></i>
+                <i class="fas fa-star text-yellow-400"></i>
+                <i class="fas fa-star text-yellow-400"></i>
+                <i class="fas fa-star text-yellow-400"></i>
+            </p>
         </footer>
-    </main>
+    </div>
 
     <script>
-        // Initialize charts when DOM is loaded
+        // Initialize Charts when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            // AI Functions Chart
-            const aiFunctionsCtx = document.getElementById('aiFunctionsChart').getContext('2d');
-            new Chart(aiFunctionsCtx, {
+            // Toggle Key Insights Panel
+            const insightsToggle = document.getElementById('insights-toggle');
+            const insightsPanel = document.getElementById('insights-panel');
+            const insightsChevron = document.getElementById('insights-chevron');
+            
+            insightsToggle.addEventListener('click', function() {
+                insightsPanel.classList.toggle('active');
+                insightsChevron.classList.toggle('fa-chevron-up');
+                insightsChevron.classList.toggle('fa-chevron-down');
+                
+                if (insightsPanel.classList.contains('active')) {
+                    anime({
+                        targets: '.insight-item',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        delay: anime.stagger(100)
+                    });
+                }
+            });
+            
+            // Initialize progress bars
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const percentage = parseFloat(bar.getAttribute('data-percentage'));
+                setTimeout(() => {
+                    bar.style.width = percentage + '%';
+                }, 300);
+            });
+            
+            // Initialize gauge charts
+            const gauges = document.querySelectorAll('.gauge-fill');
+            gauges.forEach(gauge => {
+                const percentage = parseFloat(gauge.getAttribute('data-percentage'));
+                setTimeout(() => {
+                    gauge.style.height = percentage + '%';
+                }, 300);
+            });
+            
+            // Initialize tooltips click functionality
+            const tooltips = document.querySelectorAll('.tooltip');
+            tooltips.forEach(tooltip => {
+                tooltip.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // Remove 'clicked' class from all tooltips
+                    tooltips.forEach(t => {
+                        if (t !== tooltip) {
+                            t.classList.remove('clicked');
+                        }
+                    });
+                    
+                    // Toggle 'clicked' class on current tooltip
+                    tooltip.classList.toggle('clicked');
+                });
+            });
+            
+            // Close tooltips when clicking elsewhere on the page
+            document.addEventListener('click', function() {
+                tooltips.forEach(tooltip => {
+                    tooltip.classList.remove('clicked');
+                });
+            });
+            
+            // Filters functionality
+            const filterButtons = document.querySelectorAll('.filter-button');
+            const filterItems = document.querySelectorAll('.filter-item');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const filter = this.getAttribute('data-filter');
+                    
+                    // Remove active class from all buttons
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Filter items
+                    if (filter === 'all') {
+                        filterItems.forEach(item => {
+                            item.style.display = 'block';
+                            setTimeout(() => {
+                                item.style.opacity = '1';
+                                item.style.transform = 'translateY(0)';
+                            }, 100);
+                        });
+                    } else {
+                        filterItems.forEach(item => {
+                            if (item.classList.contains(filter)) {
+                                item.style.display = 'block';
+                                setTimeout(() => {
+                                    item.style.opacity = '1';
+                                    item.style.transform = 'translateY(0)';
+                                }, 100);
+                            } else {
+                                item.style.opacity = '0';
+                                item.style.transform = 'translateY(20px)';
+                                setTimeout(() => {
+                                    item.style.display = 'none';
+                                }, 300);
+                            }
+                        });
+                    }
+                    
+                    // Redraw charts to fix sizing issues
+                    setTimeout(() => {
+                        Object.values(allCharts).forEach(chart => {
+                            if (chart && typeof chart.update === 'function') {
+                                chart.update();
+                            }
+                        });
+                    }, 350);
+                });
+            });
+            
+            // Easter egg - Star animation
+            const stars = document.querySelectorAll('.fa-star');
+            stars.forEach(star => {
+                star.addEventListener('mouseenter', function() {
+                    anime({
+                        targets: this,
+                        rotate: '1turn',
+                        scale: [1, 1.5, 1],
+                        duration: 800,
+                        easing: 'easeInOutQuad'
+                    });
+                });
+            });
+            
+            // Super Easter Egg - Surprise button
+            const surpriseButton = document.getElementById('surprise-button');
+            surpriseButton.addEventListener('click', function() {
+                // Create confetti
+                createConfetti();
+                
+                // Animate all charts
+                Object.values(allCharts).forEach(chart => {
+                    if (chart && typeof chart.update === 'function') {
+                        const data = chart.data.datasets[0].data;
+                        
+                        // Animate the data
+                        const originalData = [...data];
+                        
+                        // Make data dance around briefly
+                        let counter = 0;
+                        const interval = setInterval(() => {
+                            const newData = originalData.map(val => val * (0.8 + Math.random() * 0.4));
+                            chart.data.datasets[0].data = newData;
+                            chart.update();
+                            counter++;
+                            
+                            if (counter >= 10) {
+                                clearInterval(interval);
+                                // Restore original data
+                                chart.data.datasets[0].data = originalData;
+                                chart.update();
+                            }
+                        }, 100);
+                    }
+                });
+                
+                // Animate progress bars
+                progressBars.forEach(bar => {
+                    const originalWidth = bar.style.width;
+                    anime({
+                        targets: bar,
+                        width: [originalWidth, '100%', originalWidth],
+                        duration: 1500,
+                        easing: 'easeInOutQuad'
+                    });
+                });
+                
+                // Fun popup message
+                setTimeout(() => {
+                    const funFacts = [
+                        "Faculty using AI tools save an average of 5 hours per week on routine tasks!",
+                        "Students in courses with AI literacy components show 15% higher engagement scores!",
+                        "The most innovative AI-using faculty combine 3+ different AI functions in their teaching!",
+                        "TCC is leading the region in faculty AI adoption rates among community colleges!",
+                        "Courses with AI-integrated assignments see a 12% higher completion rate!"
+                    ];
+                    
+                    const randomFact = funFacts[Math.floor(Math.random() * funFacts.length)];
+                    
+                    const popup = document.createElement('div');
+                    popup.style.position = 'fixed';
+                    popup.style.top = '50%';
+                    popup.style.left = '50%';
+                    popup.style.transform = 'translate(-50%, -50%)';
+                    popup.style.backgroundColor = 'var(--tcc-blue)';
+                    popup.style.color = 'white';
+                    popup.style.padding = '20px';
+                    popup.style.borderRadius = '10px';
+                    popup.style.zIndex = '1000';
+                    popup.style.maxWidth = '400px';
+                    popup.style.textAlign = 'center';
+                    popup.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.3)';
+                    popup.innerHTML = `
+                        <h3 class="text-xl font-bold mb-3">Amazing AI Fact!</h3>
+                        <p>${randomFact}</p>
+                        <button class="mt-4 bg-white text-blue-800 px-4 py-2 rounded font-medium">Cool!</button>
+                    `;
+                    
+                    document.body.appendChild(popup);
+                    
+                    const closeBtn = popup.querySelector('button');
+                    closeBtn.addEventListener('click', function() {
+                        document.body.removeChild(popup);
+                    });
+                }, 1000);
+            });
+            
+            // Create AI Functions Chart
+            const functionsCtx = document.getElementById('functionsChart').getContext('2d');
+            const functionsData = {
+                labels: ['Content Generation', 'Grading Assistance', 'Accessibility Support', 'Intelligent Tutoring', 'Other'],
+                datasets: [{
+                    label: 'Faculty Count',
+                    data: [72, 39, 33, 22, 17],
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        
+                        if (!chartArea) {
+                            return null;
+                        }
+                        
+                        const gradient = ctx.createLinearGradient(0, 0, chartArea.width, 0);
+                        gradient.addColorStop(0, '#003a70');
+                        gradient.addColorStop(1, '#5a8dc9');
+                        return gradient;
+                    },
+                    borderWidth: 0,
+                    borderRadius: 5
+                }]
+            };
+            
+            const functionsChart = new Chart(functionsCtx, {
                 type: 'bar',
-                data: {
-                    labels: ['Content Generation', 'Grading Assistance', 'Accessibility Support', 'Intelligent Tutoring', 'Other'],
-                    datasets: [{
-                        label: 'Faculty Usage (%)',
-                        data: [72, 39, 33, 22, 17],
-                        backgroundColor: [
-                            'rgba(0, 58, 112, 0.8)',
-                            'rgba(0, 77, 153, 0.7)',
-                            'rgba(0, 95, 184, 0.6)',
-                            'rgba(0, 119, 200, 0.5)',
-                            'rgba(0, 140, 220, 0.4)'
-                        ],
-                        borderColor: [
-                            'rgba(0, 58, 112, 1)',
-                            'rgba(0, 77, 153, 1)',
-                            'rgba(0, 95, 184, 1)',
-                            'rgba(0, 119, 200, 1)',
-                            'rgba(0, 140, 220, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
+                data: functionsData,
                 options: {
                     indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeOutQuart'
-                    },
                     plugins: {
                         legend: {
                             display: false
@@ -539,136 +838,26 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.raw + '% of faculty';
+                                    return `${context.parsed.x}% of faculty`;
                                 }
                             }
                         }
                     },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            max: 100,
-                            title: {
-                                display: true,
-                                text: 'Percentage of Faculty'
-                            },
-                            grid: {
-                                display: true,
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Time Spent Chart
-            const timeSpentCtx = document.getElementById('timeSpentChart').getContext('2d');
-            new Chart(timeSpentCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['0-30 minutes', '31-60 minutes', '61-120 minutes', '121+ minutes'],
-                    datasets: [{
-                        data: [33.3, 22.2, 22.2, 22.2],
-                        backgroundColor: [
-                            'rgba(0, 58, 112, 0.8)',
-                            'rgba(0, 95, 184, 0.7)',
-                            'rgba(0, 119, 200, 0.6)',
-                            'rgba(0, 140, 220, 0.5)'
-                        ],
-                        borderColor: 'white',
-                        borderWidth: 2,
-                        hoverOffset: 15
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '60%',
-                    animation: {
-                        animateRotate: true,
-                        animateScale: true,
-                        duration: 2000,
-                        easing: 'easeOutCirc'
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 15,
-                                padding: 15
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.label + ': ' + context.raw + '%';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Impact Chart
-            const impactCtx = document.getElementById('impactChart').getContext('2d');
-            new Chart(impactCtx, {
-                type: 'bar',
-                data: {
-                    labels: [
-                        'Lower Workload/Stress', 
-                        'No Change in DFW Rates', 
-                        'Uncertain DFW Impact',
-                        'Lower DFW Rates'
-                    ],
-                    datasets: [{
-                        data: [55.6, 50, 44.4, 5.6],
-                        backgroundColor: [
-                            'rgba(0, 119, 200, 0.7)',
-                            'rgba(0, 58, 112, 0.7)',
-                            'rgba(156, 163, 175, 0.5)',
-                            'rgba(52, 211, 153, 0.7)'
-                        ],
-                        borderColor: [
-                            'rgba(0, 119, 200, 1)',
-                            'rgba(0, 58, 112, 1)',
-                            'rgba(156, 163, 175, 1)',
-                            'rgba(52, 211, 153, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
                     animation: {
                         duration: 1500,
-                        easing: 'easeInOutQuart'
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.raw + '% of faculty';
-                                }
-                            }
-                        }
+                        easing: 'easeOutQuart'
                     },
                     scales: {
                         x: {
                             beginAtZero: true,
                             max: 100,
-                            grid: {
+                            title: {
                                 display: true,
-                                color: 'rgba(0, 0, 0, 0.05)'
+                                text: 'Percentage of Faculty',
+                                color: '#003a70'
+                            },
+                            grid: {
+                                drawOnChartArea: false
                             }
                         },
                         y: {
@@ -676,40 +865,83 @@
                                 display: false
                             }
                         }
-                    }
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true
                 }
             });
             
-            // PD & Scholarly Work Chart
-            const pdCtx = document.getElementById('pdChart').getContext('2d');
-            new Chart(pdCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['21+ PD Hours', '3+ Peer-Sharing Events', 'No Publications', 'No Cross-College Collaboration'],
-                    datasets: [{
-                        label: 'Percentage',
-                        data: [44.4, 66.7, 61.1, 77.8],
-                        backgroundColor: [
-                            'rgba(0, 58, 112, 0.7)',
-                            'rgba(0, 95, 184, 0.7)',
-                            'rgba(249, 174, 65, 0.7)',
-                            'rgba(249, 174, 65, 0.5)'
-                        ],
-                        borderColor: [
-                            'rgba(0, 58, 112, 1)',
-                            'rgba(0, 95, 184, 1)',
-                            'rgba(249, 174, 65, 1)',
-                            'rgba(249, 174, 65, 0.8)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
+            // Create Time Usage Chart
+            const timeUsageCtx = document.getElementById('timeUsageChart').getContext('2d');
+            const timeUsageData = {
+                labels: ['0-30 minutes', '31-60 minutes', '61-120 minutes', '121+ minutes'],
+                datasets: [{
+                    data: [33.3, 22.2, 22.2, 22.2],
+                    backgroundColor: ['#003a70', '#2c5d95', '#4c6e95', '#5a8dc9'],
+                    borderWidth: 0
+                }]
+            };
+            
+            const timeUsageChart = new Chart(timeUsageCtx, {
+                type: 'doughnut',
+                data: timeUsageData,
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 2000
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed}% of faculty`;
+                                }
+                            }
+                        }
                     },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true
+                }
+            });
+            
+            // Create Professional Development Chart
+            const developmentCtx = document.getElementById('developmentChart').getContext('2d');
+            const developmentData = {
+                labels: ['Extensive PD Hours (21+)', 'Peer-Sharing Events (3+)', 'No Publications/Presentations', 'No Cross-College Collaborations'],
+                datasets: [{
+                    label: 'Percentage of Faculty',
+                    data: [44.4, 66.7, 61.1, 77.8],
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        
+                        if (!chartArea) {
+                            return null;
+                        }
+                        
+                        const gradient = ctx.createLinearGradient(0, 0, 0, chartArea.height);
+                        gradient.addColorStop(0, '#5a8dc9');
+                        gradient.addColorStop(1, '#003a70');
+                        return gradient;
+                    },
+                    borderWidth: 0,
+                    borderRadius: 5
+                }]
+            };
+            
+            const developmentChart = new Chart(developmentCtx, {
+                type: 'bar',
+                data: developmentData,
+                options: {
                     plugins: {
                         legend: {
                             display: false
@@ -717,9 +949,14 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.raw + '% of faculty';
+                                    return `${context.parsed.y}% of faculty`;
                                 }
                             }
+                        }
+                    },
+                    animation: {
+                        delay: function(context) {
+                            return context.dataIndex * 100;
                         }
                     },
                     scales: {
@@ -728,140 +965,171 @@
                             max: 100,
                             title: {
                                 display: true,
-                                text: 'Percentage of Faculty'
-                            },
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
+                                text: 'Percentage of Faculty',
+                                color: '#003a70'
                             }
                         },
                         x: {
-                            grid: {
-                                display: false
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
                             }
                         }
-                    }
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true
                 }
             });
             
-            // Confidence Levels Chart
+            // Create Confidence Chart
             const confidenceCtx = document.getElementById('confidenceChart').getContext('2d');
-            new Chart(confidenceCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Low', 'Moderate', 'High', 'Very High'],
-                    datasets: [{
-                        data: [22.2, 38.9, 27.8, 11.1],
-                        backgroundColor: [
-                            'rgba(0, 58, 112, 0.4)',
-                            'rgba(0, 95, 184, 0.6)',
-                            'rgba(0, 119, 200, 0.8)',
-                            'rgba(0, 140, 220, 1)'
-                        ],
-                        borderColor: [
-                            'rgba(0, 58, 112, 1)',
-                            'rgba(0, 95, 184, 1)',
-                            'rgba(0, 119, 200, 1)',
-                            'rgba(0, 140, 220, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 1500
+            const confidenceData = {
+                labels: ['Not Confident', 'Slightly Confident', 'Moderately Confident', 'Very Confident', 'Extremely Confident'],
+                datasets: [{
+                    label: 'Percentage of Faculty',
+                    data: [11.1, 16.7, 38.9, 22.2, 11.1],
+                    backgroundColor: function(context) {
+                        const index = context.dataIndex;
+                        const value = context.dataset.data[index];
+                        const colors = [
+                            '#90A4AE', // Not Confident
+                            '#80DEEA', // Slightly Confident
+                            '#4FC3F7', // Moderately Confident
+                            '#4C6E95', // Very Confident
+                            '#003A70'  // Extremely Confident
+                        ];
+                        return colors[index];
                     },
+                    borderWidth: 0,
+                    borderRadius: 5
+                }]
+            };
+            
+            const confidenceChart = new Chart(confidenceCtx, {
+                type: 'bar',
+                data: confidenceData,
+                options: {
                     plugins: {
                         legend: {
                             display: false
                         },
                         tooltip: {
                             callbacks: {
+                                afterLabel: function(context) {
+                                    if (context.dataIndex === 2) {
+                                        return 'Most common confidence level';
+                                    }
+                                    return '';
+                                },
                                 label: function(context) {
-                                    return context.raw + '% of faculty';
+                                    return `${context.parsed.y}% of faculty`;
                                 }
                             }
+                        }
+                    },
+                    animation: {
+                        delay: function(context) {
+                            return context.dataIndex * 100;
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
                             max: 50,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
+                            title: {
+                                display: true,
+                                text: 'Percentage of Faculty',
+                                color: '#003a70'
                             }
                         }
-                    }
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true
                 }
             });
-
-            // Animate progress bars
-            setTimeout(() => {
-                document.getElementById('policy-progress').style.width = '94.4%';
-                document.getElementById('integrity-progress').style.width = '94.4%';
-                document.getElementById('assignment-progress').style.width = '61.1%';
-            }, 500);
-
-            // Initialize collapsible panels
-            const collapsibles = document.getElementsByClassName("collapsible");
-            for (let i = 0; i < collapsibles.length; i++) {
-                collapsibles[i].addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    const content = this.nextElementSibling;
-                    const icon = this.querySelector("i.fas.fa-plus, i.fas.fa-minus");
-                    
-                    if (content.style.maxHeight) {
-                        content.style.maxHeight = null;
-                        icon.classList.remove("fa-minus");
-                        icon.classList.add("fa-plus");
-                    } else {
-                        content.style.maxHeight = content.scrollHeight + "px";
-                        icon.classList.remove("fa-plus");
-                        icon.classList.add("fa-minus");
-                    }
-                });
-            }
-
-            // Easter egg functionality
-            const tccLogo = document.getElementById('tccLogo');
-            const easterEgg = document.getElementById('easterEgg');
-            const closeEasterEgg = document.getElementById('closeEasterEgg');
             
-            let clickCount = 0;
+            // Store all charts for reference
+            const allCharts = {
+                functionsChart,
+                timeUsageChart,
+                developmentChart,
+                confidenceChart
+            };
             
-            tccLogo.addEventListener('click', function() {
-                clickCount++;
+            // Create confetti function for easter egg
+            function createConfetti() {
+                const colors = ['#003a70', '#5a8dc9', '#ffcc00', '#ff6b6b', '#4ecdc4'];
                 
-                if (clickCount === 3) {
-                    easterEgg.classList.remove('hidden');
-                    clickCount = 0;
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
                     
-                    // Auto-hide after 10 seconds
+                    const size = Math.floor(5 + Math.random() * 10);
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    confetti.style.width = `${size}px`;
+                    confetti.style.height = `${size}px`;
+                    confetti.style.backgroundColor = color;
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.animationDuration = `${3 + Math.random() * 2}s`;
+                    confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                    
+                    // Generate random confetti shape
+                    const shapes = ['circle', 'square', 'triangle'];
+                    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                    
+                    if (shape === 'circle') {
+                        confetti.style.borderRadius = '50%';
+                    } else if (shape === 'triangle') {
+                        confetti.style.width = '0';
+                        confetti.style.height = '0';
+                        confetti.style.backgroundColor = 'transparent';
+                        confetti.style.borderLeft = `${size}px solid transparent`;
+                        confetti.style.borderRight = `${size}px solid transparent`;
+                        confetti.style.borderBottom = `${size * 1.5}px solid ${color}`;
+                    }
+                    
+                    document.body.appendChild(confetti);
+                    
+                    // Remove confetti after animation completes
                     setTimeout(() => {
-                        if (!easterEgg.classList.contains('hidden')) {
-                            easterEgg.classList.add('hidden');
+                        if (document.body.contains(confetti)) {
+                            document.body.removeChild(confetti);
                         }
-                    }, 10000);
+                    }, 5000);
                 }
+            }
+            
+            // Initialize animations for header elements
+            anime({
+                targets: '.header-animation',
+                opacity: [0, 1],
+                translateY: [-30, 0],
+                duration: 1500,
+                easing: 'easeOutQuad'
             });
             
-            closeEasterEgg.addEventListener('click', function() {
-                easterEgg.classList.add('hidden');
-            });
-            
-            // Add some fun animations on load
+            // Animate cards as they come into view
             const cards = document.querySelectorAll('.card');
-            cards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.classList.add('fadeIn');
-                }, 200 * (index + 1));
+            
+            const animateCards = () => {
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100 * index);
+                });
+            };
+            
+            // Set initial opacity and transform for cards
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
             });
+            
+            // Animate cards after a short delay
+            setTimeout(animateCards, 500);
         });
     </script>
 </body>
